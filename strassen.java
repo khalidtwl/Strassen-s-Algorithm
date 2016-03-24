@@ -4,7 +4,7 @@ import java.io.*;
 
 public class strassen {
 
-  static int cutoff = 2;
+  static int cutoff = 16;
 
   // The conventional method of multiplying two matrices
   static int[] conventional(int[] a, int[] b, int n) {
@@ -25,42 +25,51 @@ public class strassen {
 
   // Adding two matrices together
   static int[] add(int[] a, int[] b) {
+    int[] c = new int[a.length];
     for (int i = 0; i < a.length; i++) {
-      a[i] += b[i];
+      c[i] = a[i] + b[i];
     }
-    return a;
+    return c;
   }
 
   // Subtracting two matrices
   static int[] subtract(int[] a, int[] b) {
+    int[] c = new int[b.length];
     for (int i = 0; i < a.length; i++) {
-      a[i] -= b[i];
+      c[i] = a[i] - b[i];
     }
-    return a;
+    return c;
   }
 
   // Strassen's Algorithm
   static int[] strassMul(int[] a, int[] b, int n) {
-    if (n < cutoff) {
-      return conventional(a, b, n);
+    // if (n < cutoff) {
+    //   return conventional(a, b, n);
+    // }
+
+    if (n == 1) {
+      int[] c = new int[1];
+      c[0] = a[0] * b[0];
+      return c;
     }
 
     // Dimension of the submatrices
     int subsize = n / 2;
+    int subsizeSqd = subsize * subsize;
 
     // Preparing to subdivide the matrices
-    int[] A = new int[n * n / 4];
-    int[] B = new int[n * n / 4];
-    int[] C = new int[n * n / 4];
-    int[] D = new int[n * n / 4];
-    
-    int[] E = new int[n * n / 4];
-    int[] F = new int[n * n / 4];
-    int[] G = new int[n * n / 4];
-    int[] H = new int[n * n / 4];
+    int[] A = new int[subsizeSqd];
+    int[] B = new int[subsizeSqd];
+    int[] C = new int[subsizeSqd];
+    int[] D = new int[subsizeSqd];
 
-    int[] addAns = new int[n * n / 4];
-    int[] subAns = new int[n * n / 4];
+    int[] E = new int[subsizeSqd];
+    int[] F = new int[subsizeSqd];
+    int[] G = new int[subsizeSqd];
+    int[] H = new int[subsizeSqd];
+
+    int[] addAns = new int[subsizeSqd];
+    int[] subAns = new int[subsizeSqd];
 
     // Fills in the submatrices
     for (int i = 0; i < subsize; i++) {
@@ -81,45 +90,22 @@ public class strassen {
 
     // Testing the subdivisions
     // System.out.print("Testing A[]...");
-    // for (int i = 0; i < A.length; i++) {
-    //   System.out.print(A[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < A.length; i++) {System.out.print(A[i] + " ");}
     // System.out.print("\nTesting B[]...");
-    // for (int i = 0; i < B.length; i++) {
-    //   System.out.print(B[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < B.length; i++) {System.out.print(B[i] + " ");}
     // System.out.print("\nTesting C[]...");
-    // for (int i = 0; i < C.length; i++) {
-    //   System.out.print(C[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < C.length; i++) {System.out.print(C[i] + " ");}
     // System.out.print("\nTesting D[]...");
-    // for (int i = 0; i < D.length; i++) {
-    //   System.out.print(D[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < D.length; i++) {System.out.print(D[i] + " ");}
     // System.out.print("\nTesting E[]...");
-    // for (int i = 0; i < E.length; i++) {
-    //   System.out.print(E[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < E.length; i++) {System.out.print(E[i] + " ");}
     // System.out.print("\nTesting F[]...");
-    // for (int i = 0; i < F.length; i++) {
-    //   System.out.print(F[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < F.length; i++) {System.out.print(F[i] + " ");}
     // System.out.print("\nTesting G[]...");
-    // for (int i = 0; i < G.length; i++) {
-    //   System.out.print(G[i] + " ");
-    // }
-    //
+    // for (int i = 0; i < G.length; i++) {System.out.print(G[i] + " ");}
     // System.out.print("\nTesting H[]...");
-    // for (int i = 0; i < H.length; i++) {
-    //   System.out.print(H[i] + " ");
-    // }
-    // System.out.println("");
+    // for (int i = 0; i < H.length; i++) {System.out.print(H[i] + " ");}
+    // System.out.println("\n");
 
     // The Seven Products
     subAns = subtract(F, H);
@@ -153,31 +139,40 @@ public class strassen {
     // System.out.println("P4: " + P4[0]);
     // System.out.println("P5: " + P5[0]);
     // System.out.println("P6: " + P6[0]);
-    // System.out.println("P7: " + P7[0]);
+    // System.out.println("P7: " + P7[0] + "\n");
 
     // Creating 4 new answer submatrices
-    int[] AEBG = add(subtract(add(P5, P4), P2), P6);
-    int[] AFBH = add(P1, P2);
-    int[] CEDG = add(P3, P4);
-    int[] CFDH = subtract(subtract(add(P5, P1), P3), P7);
+    addAns = add(P5, P4);
+    subAns = subtract(addAns, P2);
+    A = add(subAns, P6);
+    B = add(P1, P2);
+    C = add(P3, P4);
+    addAns = add(P5, P1);
+    subAns = subtract(addAns, P3);
+    D = subtract(subAns, P7);
 
     // Testing answer submatrices
-    // System.out.println("AEBG: " + AEBG[0]);
-    // System.out.println("AFBH: " + AFBH[0]);
-    // System.out.println("CEDG: " + CEDG[0]);
-    // System.out.println("CFDH: " + CFDH[0]);
+    // for (int i = 0; i < A.length; i++){
+    //   if (i % subsize ==  subsize-1)
+    //     System.out.println(A[i] + "");
+    //   else
+    //     System.out.print(A[i] + "  ");
+    // }
+    // System.out.println("");
+
+    int[] c = new int[n*n];
 
     // Merging them to get an answer matrix
     for (int i = 0; i < subsize; i++) {
       for (int j = 0; j < subsize; j++) {
-        a[(i * n) + j] = AEBG[(i * subsize) + j];
-        a[(i * n) + (j + subsize)] = AFBH[(i * subsize) + j];
-        a[(i + subsize) * n + j] = CEDG[(i * subsize) + j];
-        a[(i + subsize) * n + (j + subsize)] = CFDH[(i * subsize) + j];
+        c[(i * n) + j] = A[(i * subsize) + j];
+        c[(i * n) + (j + subsize)] = B[(i * subsize) + j];
+        c[(i + subsize) * n + j] = C[(i * subsize) + j];
+        c[(i + subsize) * n + (j + subsize)] = D[(i * subsize) + j];
       }
     }
-
-    return a;
+    a = null;
+    return c;
   }
 
   public static void main(String[] args) {
@@ -240,38 +235,50 @@ public class strassen {
     // }
     // System.out.println("");
 
+    // System.out.println("Initial Matrices");
     // for (int i = 0; i < arr1.length; i++){
-    //   System.out.print(arr1[i]);
+    //   if (i % n ==  n-1)
+    //     System.out.println(arr1[i] + "");
+    //   else
+    //     System.out.print(arr1[i] + "  ");
     // }
     // System.out.println("");
     //
     // for (int i = 0; i < arr2.length; i++){
-    //   System.out.print(arr2[i]);
+    //   if (i % n ==  n-1)
+    //     System.out.println(arr2[i] + "");
+    //   else
+    //     System.out.print(arr2[i] + "  ");
     // }
     // System.out.println("");
 
     // Testing Conventional
     System.out.println("Conventional:");
-    long startTime = System.currentTimeMillis();
+    long startTime = System.nanoTime();
     int[] c = conventional(arr1, arr2, n);
-    long endTime = System.currentTimeMillis();
+    long endTime = System.nanoTime();
     System.out.println("Time elapsed: " + (endTime-startTime) + " millionth milliseconds");
 
     // for (int i = 0; i < c.length; i++) {
-    //   System.out.print(c[i] + " ");
+    //   if (i % n ==  n-1)
+    //     System.out.println(c[i] + "");
+    //   else
+    //     System.out.print(c[i] + "\t");
     // }
     // System.out.println("\n");
 
     // Testing Strassen's
     System.out.println("\nStrassen's:");
-    startTime = System.nanoTime();
+    long startTime2 = System.nanoTime();
     int[] d = strassMul(arr1, arr2, n);
-    endTime = System.nanoTime();
-    System.out.println("Time elapsed: " + (endTime-startTime) + " millionth milliseconds");
+    long endTime2 = System.nanoTime();
+    System.out.println("Time elapsed: " + (endTime2-startTime2) + " millionth milliseconds");
 
-    // for (int i = 0; i < d.length; i++) {
-    //   System.out.print(d[i] + " ");
-    // }
-    // System.out.println("");
+    for (int i = 0; i < d.length; i++) {
+      if (c[i] != d[i])
+        System.out.println("Incorrect Results!");
+        return;
+    }
+    System.out.println("");
   }
 }
