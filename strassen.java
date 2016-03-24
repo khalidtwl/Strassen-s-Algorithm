@@ -1,9 +1,9 @@
 import java.lang.*;
 import java.util.*;
+import java.io.*;
 
 public class strassen {
-  static int[] arr1 = {5,9,2,3,1,4,2,14,8,10,11,7,12,3,5,4};
-  static int[] arr2 = {5,9,2,3,1,4,2,14,8,10,11,7,12,3,5,4};
+
   static int cutoff = 2;
 
   // The conventional method of multiplying two matrices
@@ -14,8 +14,8 @@ public class strassen {
 
     // Carries out the math in n^3 time
     for (int i = 0; i < n; i++) {
-      for (int j = 0; j < n; j++) {
-        for (int k = 0; k < n; k++) {
+      for (int k = 0; k < n; k++) {
+        for (int j = 0; j < n; j++) {
           c[(i * n) + j] += a[(i * n) + k] * b[(k * n) + j];
         }
       }
@@ -25,20 +25,18 @@ public class strassen {
 
   // Adding two matrices together
   static int[] add(int[] a, int[] b) {
-    int[] c = new int[a.length];
-    for (int i = 0; i < c.length; i++) {
-      c[i] = a[i] + b[i];
+    for (int i = 0; i < a.length; i++) {
+      a[i] += b[i];
     }
-    return c;
+    return a;
   }
 
   // Subtracting two matrices
   static int[] subtract(int[] a, int[] b) {
-    int[] c = new int[a.length];
-    for (int i = 0; i < c.length; i++) {
-      c[i] = a[i] - b[i];
+    for (int i = 0; i < a.length; i++) {
+      a[i] -= b[i];
     }
-    return c;
+    return a;
   }
 
   // Strassen's Algorithm
@@ -55,10 +53,14 @@ public class strassen {
     int[] B = new int[n * n / 4];
     int[] C = new int[n * n / 4];
     int[] D = new int[n * n / 4];
+    
     int[] E = new int[n * n / 4];
     int[] F = new int[n * n / 4];
     int[] G = new int[n * n / 4];
     int[] H = new int[n * n / 4];
+
+    int[] addAns = new int[n * n / 4];
+    int[] subAns = new int[n * n / 4];
 
     // Fills in the submatrices
     for (int i = 0; i < subsize; i++) {
@@ -120,13 +122,29 @@ public class strassen {
     // System.out.println("");
 
     // The Seven Products
-    int[] P1 = strassMul(A, subtract(F,H), subsize);
-    int[] P2 = strassMul(add(A,B), H, subsize);
-    int[] P3 = strassMul(add(C,D), E, subsize);
-    int[] P4 = strassMul(D, subtract(G,E), subsize);
-    int[] P5 = strassMul(add(A,D), add(E,H), subsize);
-    int[] P6 = strassMul(subtract(B,D), add(G,H), subsize);
-    int[] P7 = strassMul(subtract(A,C), add(E,F), subsize);
+    subAns = subtract(F, H);
+    int[] P1 = strassMul(A, subAns, subsize);
+
+    addAns = add(A, B);
+    int[] P2 = strassMul(addAns, H, subsize);
+
+    addAns = add(C, D);
+    int[] P3 = strassMul(addAns, E, subsize);
+
+    subAns = subtract(G, E);
+    int[] P4 = strassMul(D, subAns, subsize);
+
+    addAns = add(A, D);
+    subAns = add(E, H);
+    int[] P5 = strassMul(addAns, subAns, subsize);
+
+    addAns = add(G, H);
+    subAns = subtract(B, D);
+    int[] P6 = strassMul(subAns, addAns, subsize);
+
+    addAns = add(E, F);
+    subAns = subtract(A, C);
+    int[] P7 = strassMul(subAns, addAns, subsize);
 
     // Testing the seven products
     // System.out.println("P1: " + P1[0]);
@@ -149,31 +167,62 @@ public class strassen {
     // System.out.println("CEDG: " + CEDG[0]);
     // System.out.println("CFDH: " + CFDH[0]);
 
-    int[] c = new int[n * n];
-
     // Merging them to get an answer matrix
     for (int i = 0; i < subsize; i++) {
       for (int j = 0; j < subsize; j++) {
-        c[(i * n) + j] = AEBG[(i * subsize) + j];
-        c[(i * n) + (j + subsize)] = AFBH[(i * subsize) + j];
-        c[(i + subsize) * n + j] = CEDG[(i * subsize) + j];
-        c[(i + subsize) * n + (j + subsize)] = CFDH[(i * subsize) + j];
+        a[(i * n) + j] = AEBG[(i * subsize) + j];
+        a[(i * n) + (j + subsize)] = AFBH[(i * subsize) + j];
+        a[(i + subsize) * n + j] = CEDG[(i * subsize) + j];
+        a[(i + subsize) * n + (j + subsize)] = CFDH[(i * subsize) + j];
       }
     }
 
-    return c;
+    return a;
   }
 
   public static void main(String[] args) {
 
     // Checks the flags
-    if(args.length != 2) {
-      System.out.println("Output should be of the form 'java strassen 0 <dimension>'");
+    if(args.length != 3) {
+      System.out.println("Output should be of the form 'java strassen 0 <dimension> <inputfile>'");
       return;
     }
 
+    // Loads flags into memory
     int n = Integer.parseInt(args[1], 10);
-    System.out.println("Multiplying a " + n + " by " + n + " matrix.");
+    String filename = args[2];
+
+    // Creates the two matrices
+    int[] arr1 = new int[n * n];
+    int[] arr2 = new int[n * n];
+    BufferedReader in = null;
+
+    // Reading the inputfile
+    try {
+      int num;
+
+      // Contains the file
+      in = new BufferedReader(new FileReader(filename));
+
+      // Populates our first matrix
+      for (int i = 0; i < arr1.length; i++) {
+        num = Integer.parseInt(in.readLine(), 10);
+        arr1[i] = num;
+      }
+
+      // Populates our second matrix
+      for (int i = 0; i < arr2.length; i++) {
+        num = Integer.parseInt(in.readLine(), 10);
+        arr2[i] = num;
+      }
+
+      in.close();
+    }
+    catch (Exception e) {
+      System.out.println("Exception occurred reading " + filename);
+      e.printStackTrace();
+      return;
+    }
 
     // // Testing addition
     // System.out.println("Adding...");
@@ -191,20 +240,38 @@ public class strassen {
     // }
     // System.out.println("");
 
+    // for (int i = 0; i < arr1.length; i++){
+    //   System.out.print(arr1[i]);
+    // }
+    // System.out.println("");
+    //
+    // for (int i = 0; i < arr2.length; i++){
+    //   System.out.print(arr2[i]);
+    // }
+    // System.out.println("");
+
     // Testing Conventional
     System.out.println("Conventional:");
+    long startTime = System.currentTimeMillis();
     int[] c = conventional(arr1, arr2, n);
-    for (int i = 0; i < c.length; i++) {
-      System.out.print(c[i] + " ");
-    }
-    System.out.println("\n");
+    long endTime = System.currentTimeMillis();
+    System.out.println("Time elapsed: " + (endTime-startTime) + " millionth milliseconds");
+
+    // for (int i = 0; i < c.length; i++) {
+    //   System.out.print(c[i] + " ");
+    // }
+    // System.out.println("\n");
 
     // Testing Strassen's
-    System.out.println("Strassen's:");
+    System.out.println("\nStrassen's:");
+    startTime = System.nanoTime();
     int[] d = strassMul(arr1, arr2, n);
-    for (int i = 0; i < d.length; i++) {
-      System.out.print(d[i] + " ");
-    }
-    System.out.println("");
+    endTime = System.nanoTime();
+    System.out.println("Time elapsed: " + (endTime-startTime) + " millionth milliseconds");
+
+    // for (int i = 0; i < d.length; i++) {
+    //   System.out.print(d[i] + " ");
+    // }
+    // System.out.println("");
   }
 }
