@@ -4,7 +4,7 @@ import java.io.*;
 
 public class strassen {
 
-  static int cutoff = 16;
+  static int cutoff = 1;
 
   // The conventional method of multiplying two matrices
   static int[] conventional(int[] a, int[] b, int n) {
@@ -35,7 +35,8 @@ public class strassen {
   // Subtracting two matrices
   static int[] subtract(int[] a, int[] b) {
     int[] c = new int[b.length];
-    for (int i = 0; i < a.length; i++) {
+    // System.out.println(a.length + " " + b.length);
+    for (int i = 0; i < Math.min(a.length, b.length); i++) {
       c[i] = a[i] - b[i];
     }
     return c;
@@ -43,9 +44,9 @@ public class strassen {
 
   // Strassen's Algorithm
   static int[] strassMul(int[] a, int[] b, int n) {
-    // if (n < cutoff) {
-    //   return conventional(a, b, n);
-    // }
+    if (n < cutoff) {
+      return conventional(a, b, n);
+    }
 
     if (n == 1) {
       int[] c = new int[1];
@@ -68,8 +69,8 @@ public class strassen {
     int[] G = new int[subsizeSqd];
     int[] H = new int[subsizeSqd];
 
-    int[] addAns = new int[subsizeSqd];
-    int[] subAns = new int[subsizeSqd];
+    // int[] addAns = new int[subsizeSqd];
+    // int[] subAns = new int[subsizeSqd];
 
     // Fills in the submatrices
     for (int i = 0; i < subsize; i++) {
@@ -108,29 +109,37 @@ public class strassen {
     // System.out.println("\n");
 
     // The Seven Products
-    subAns = subtract(F, H);
-    int[] P1 = strassMul(A, subAns, subsize);
+    // subAns = subtract(F, H);
+    // int[] P1 = strassMul(A, subAns, subsize);
+    //
+    // addAns = add(A, B);
+    // int[] P2 = strassMul(addAns, H, subsize);
+    //
+    // addAns = add(C, D);
+    // int[] P3 = strassMul(addAns, E, subsize);
+    //
+    // subAns = subtract(G, E);
+    // int[] P4 = strassMul(D, subAns, subsize);
+    //
+    // addAns = add(A, D);
+    // subAns = add(E, H);
+    // int[] P5 = strassMul(addAns, subAns, subsize);
+    //
+    // addAns = add(G, H);
+    // subAns = subtract(B, D);
+    // int[] P6 = strassMul(subAns, addAns, subsize);
+    //
+    // addAns = add(E, F);
+    // subAns = subtract(A, C);
+    // int[] P7 = strassMul(subAns, addAns, subsize);
 
-    addAns = add(A, B);
-    int[] P2 = strassMul(addAns, H, subsize);
-
-    addAns = add(C, D);
-    int[] P3 = strassMul(addAns, E, subsize);
-
-    subAns = subtract(G, E);
-    int[] P4 = strassMul(D, subAns, subsize);
-
-    addAns = add(A, D);
-    subAns = add(E, H);
-    int[] P5 = strassMul(addAns, subAns, subsize);
-
-    addAns = add(G, H);
-    subAns = subtract(B, D);
-    int[] P6 = strassMul(subAns, addAns, subsize);
-
-    addAns = add(E, F);
-    subAns = subtract(A, C);
-    int[] P7 = strassMul(subAns, addAns, subsize);
+    int[] P7 = strassMul(subtract(A,C),add(E,F), subsize);
+    int[] P1 = strassMul(A,subtract(F,H), subsize);
+    int[] P3 = strassMul(add(C,D),E, subsize);
+    int[] P5 = strassMul(add(A,D),add(E,H), subsize);
+    int[] P2 = strassMul(add(A,B),H, subsize);
+    int[] P6 = strassMul(subtract(B,D),add(G,H), subsize);
+    int[] P4 = strassMul(D, subtract(G,E), subsize);
 
     // Testing the seven products
     // System.out.println("P1: " + P1[0]);
@@ -142,14 +151,10 @@ public class strassen {
     // System.out.println("P7: " + P7[0] + "\n");
 
     // Creating 4 new answer submatrices
-    addAns = add(P5, P4);
-    subAns = subtract(addAns, P2);
-    A = add(subAns, P6);
+    A = add(subtract(add(P5, P4), P2), P6);
     B = add(P1, P2);
     C = add(P3, P4);
-    addAns = add(P5, P1);
-    subAns = subtract(addAns, P3);
-    D = subtract(subAns, P7);
+    D = subtract(subtract(add(P5, P1), P3), P7);
 
     // Testing answer submatrices
     // for (int i = 0; i < A.length; i++){
@@ -171,7 +176,6 @@ public class strassen {
         c[(i + subsize) * n + (j + subsize)] = D[(i * subsize) + j];
       }
     }
-    a = null;
     return c;
   }
 
